@@ -39,4 +39,28 @@ defmodule Protohackers.EchoServerTest do
 
     :gen_tcp.shutdown(socket, :read)
   end
+
+  test "handles at least 5 simultaneous clients" do
+    {:ok, port} = Protohackers.EchoServer.start_link(0, pool_size: 5)
+
+    1..5
+    |> Enum.map(fn _index ->
+      {:ok, socket} = :gen_tcp.connect('localhost', port, [:binary, active: false])
+      socket
+    end)
+    |> Enum.with_index()
+    |> Enum.map(fn {socket, index} ->
+      :gen_tcp.send(socket, "test#{index}")
+
+      {socket, "test#{index}"}
+    end)
+    |> Enum.map(fn {socket, binary_sent} ->
+      assert {:ok, ^binary_sent} = :gen_tcp.recv(socket, 0)
+
+      socket
+    end)
+    |> Enum.each(fn socket ->
+      :gen_tcp.shutdown(socket, :read_write)
+    end)
+  end
 end
