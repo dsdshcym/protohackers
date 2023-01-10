@@ -34,7 +34,7 @@ defmodule Protohackers.EchoServer do
   end
 
   defp loop(socket) do
-    case :gen_tcp.recv(socket, 0) do
+    case :gen_tcp.recv(socket, 0, 1_000) do
       {:ok, binary} ->
         :gen_tcp.send(socket, binary)
 
@@ -42,6 +42,11 @@ defmodule Protohackers.EchoServer do
 
       {:error, :closed} ->
         {:ok, :socket_closed}
+
+      {:error, :timeout} ->
+        :gen_tcp.shutdown(socket, :read_write)
+
+        {:error, :timeout}
     end
   end
 end
