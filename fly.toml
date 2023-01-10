@@ -14,7 +14,7 @@ processes = []
 [[services]]
   http_checks = []
   tcp_checks = []
-  internal_port = 8080
+  internal_port = 5678
   processes = ["app"]
   protocol = "tcp"
   script_checks = []
@@ -24,10 +24,4 @@ processes = []
     type = "connections"
 
   [[services.ports]]
-    force_https = true
-    handlers = ["http"]
-    port = 80
-
-  [[services.ports]]
-    handlers = ["tls", "http"]
-    port = 443
+    port = 5678
