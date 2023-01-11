@@ -96,4 +96,24 @@ defmodule Protohackers.PrimeServerTest do
 
     assert {:ok, '{"method":"isPrime","prime":false}\n'} = :gen_tcp.recv(peer_socket, 0)
   end
+
+  test "handles at least 5 simultaneous clients" do
+    {:ok, port} = Protohackers.PrimeServer.start_link()
+
+    1..5
+    |> Enum.map(fn _index ->
+      {:ok, peer_socket} = :gen_tcp.connect(~c/localhost/, port, mode: :list, active: false)
+      peer_socket
+    end)
+    |> Enum.map(fn peer_socket ->
+      :ok = :gen_tcp.send(peer_socket, '{"method": "isPrime", "number": 123}\n')
+
+      peer_socket
+    end)
+    |> Enum.map(fn peer_socket ->
+      assert {:ok, '{"method":"isPrime","prime":false}\n'} = :gen_tcp.recv(peer_socket, 0)
+
+      peer_socket
+    end)
+  end
 end

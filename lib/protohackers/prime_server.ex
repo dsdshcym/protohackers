@@ -11,7 +11,7 @@ defmodule Protohackers.PrimeServer do
   defp loop(listen_socket) do
     case :gen_tcp.accept(listen_socket) do
       {:ok, peer_socket} ->
-        handle_connection(peer_socket)
+        Task.start_link(fn -> handle_connection(peer_socket) end)
         loop(listen_socket)
 
       {:error, reason} ->
