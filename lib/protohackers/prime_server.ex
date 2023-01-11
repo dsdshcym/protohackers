@@ -60,6 +60,6 @@ defmodule Protohackers.PrimeServer do
   defp is_prime?(1), do: false
 
   defp is_prime?(number) when is_integer(number) do
-    Enum.filter(1..number//1, &(rem(number, &1) == 0)) == [1, number]
+    !Enum.any?(2..round(:math.sqrt(number))//1, &(rem(number, &1) == 0))
   end
 end
