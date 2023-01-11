@@ -25,3 +25,9 @@ processes = []
 
   [[services.ports]]
     port = 5678
+
+[[services]]
+  internal_port = 5001
+  protocol = "tcp"
+  [[services.ports]]
+    port = 5001
