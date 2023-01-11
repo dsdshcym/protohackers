@@ -8,6 +8,7 @@ defmodule Protohackers.Application do
   @impl true
   def start(_type, _args) do
     {:ok, 5678} = Protohackers.EchoServer.start_link(5678)
+    {:ok, 5001} = Protohackers.PrimeServer.start_link(5001)
 
     children = [
       # Starts a worker by calling: Protohackers.Worker.start_link(arg)
