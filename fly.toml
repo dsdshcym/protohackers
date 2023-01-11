@@ -1,7 +1,7 @@
 # fly.toml file generated for yiming-protohackers on 2023-01-10T22:10:47+08:00
 
 app = "yiming-protohackers"
-kill_signal = "SIGINT"
+kill_signal = "SIGTERM"
 kill_timeout = 5
 processes = []
 
