@@ -51,7 +51,7 @@ defmodule Protohackers.PrimeServerTest do
 
     {:ok, peer_socket} = :gen_tcp.connect(~c/localhost/, port, mode: :list, active: false)
 
-    :ok = :gen_tcp.send(peer_socket, '[1,2,3]\n')
+    :ok = :gen_tcp.send(peer_socket, '[1,2,3}\n')
 
     assert {:ok, 'null'} = :gen_tcp.recv(peer_socket, 0)
   end

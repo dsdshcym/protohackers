@@ -48,7 +48,8 @@ defmodule Protohackers.PrimeServer do
         :ok = :gen_tcp.close(peer_socket)
 
       {:error, _decode_error} ->
-        nil
+        :gen_tcp.send(peer_socket, Jason.encode_to_iodata!(nil))
+        :ok = :gen_tcp.close(peer_socket)
     end
   end
 
