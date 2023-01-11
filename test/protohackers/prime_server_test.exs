@@ -25,6 +25,27 @@ defmodule Protohackers.PrimeServerTest do
     assert {:ok, '{"method":"isPrime","prime":false}\n'} = :gen_tcp.recv(peer_socket, 0)
   end
 
+  test "is_prime?/1 logic is correct" do
+    {:ok, port} = Protohackers.PrimeServer.start_link()
+
+    {:ok, peer_socket} = :gen_tcp.connect(~c/localhost/, port, mode: :list, active: false)
+
+    :ok = :gen_tcp.send(peer_socket, '{"method":"isPrime","number":-2}\n')
+    assert {:ok, '{"method":"isPrime","prime":false}\n'} = :gen_tcp.recv(peer_socket, 0)
+
+    :ok = :gen_tcp.send(peer_socket, '{"method":"isPrime","number":0}\n')
+    assert {:ok, '{"method":"isPrime","prime":false}\n'} = :gen_tcp.recv(peer_socket, 0)
+
+    :ok = :gen_tcp.send(peer_socket, '{"method":"isPrime","number":1}\n')
+    assert {:ok, '{"method":"isPrime","prime":false}\n'} = :gen_tcp.recv(peer_socket, 0)
+
+    :ok = :gen_tcp.send(peer_socket, '{"method":"isPrime","number":2}\n')
+    assert {:ok, '{"method":"isPrime","prime":true}\n'} = :gen_tcp.recv(peer_socket, 0)
+
+    :ok = :gen_tcp.send(peer_socket, '{"method":"isPrime","number":3}\n')
+    assert {:ok, '{"method":"isPrime","prime":true}\n'} = :gen_tcp.recv(peer_socket, 0)
+  end
+
   test "send back a malformed response when receiving a malformed request (not a well-formed JSON object)" do
     {:ok, port} = Protohackers.PrimeServer.start_link()
 
