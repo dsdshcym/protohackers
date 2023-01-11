@@ -41,10 +41,10 @@ defmodule Protohackers.PrimeServer do
           "prime" => is_prime?(number)
         }
 
-        :ok = :gen_tcp.send(peer_socket, [Jason.encode_to_iodata!(response), '\n'])
+        :gen_tcp.send(peer_socket, [Jason.encode_to_iodata!(response), '\n'])
 
       {:ok, _malformed_request} ->
-        :ok = :gen_tcp.send(peer_socket, Jason.encode_to_iodata!(nil))
+        :gen_tcp.send(peer_socket, Jason.encode_to_iodata!(nil))
         :ok = :gen_tcp.close(peer_socket)
 
       {:error, _decode_error} ->
