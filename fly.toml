@@ -31,3 +31,9 @@ processes = []
   protocol = "tcp"
   [[services.ports]]
     port = 5001
+
+[[services]]
+  internal_port = 5002
+  protocol = "tcp"
+  [[services.ports]]
+    port = 5002
