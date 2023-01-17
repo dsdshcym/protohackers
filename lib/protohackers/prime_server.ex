@@ -19,18 +19,27 @@ defmodule Protohackers.PrimeServer do
     end
   end
 
-  defp handle_connection(peer_socket, buffer \\ []) do
-    case :gen_tcp.recv(peer_socket, 1) do
-      {:ok, '\n'} ->
-        handle_request(peer_socket, buffer)
-        handle_connection(peer_socket, [])
-
-      {:ok, non_terminator} ->
-        handle_connection(peer_socket, [buffer, non_terminator])
-
-      {:error, :closed} ->
-        :ok
-    end
+  defp handle_connection(peer_socket) do
+    Stream.resource(
+      fn -> peer_socket end,
+      fn peer_socket ->
+        case :gen_tcp.recv(peer_socket, 0) do
+          {:ok, list} -> {list, peer_socket}
+          {:error, :closed} -> {:halt, peer_socket}
+        end
+      end,
+      fn _closed_socket -> :ok end
+    )
+    |> Stream.chunk_while(
+      [],
+      fn
+        ?\n, acc -> {:cont, Enum.reverse(acc), []}
+        non_terminator, acc -> {:cont, [non_terminator | acc]}
+      end,
+      fn leftover -> {:cont, leftover} end
+    )
+    |> Stream.each(fn request -> handle_request(peer_socket, request) end)
+    |> Stream.run()
   end
 
   defp handle_request(peer_socket, request) do
