@@ -91,7 +91,8 @@ defmodule Protohackers.BudgetChatServer do
             {:error, _} ->
               :gen_tcp.close(state.peer_socket)
 
-              {:noreply, Map.take(state, [:listen_socket]), {:continue, :wait_for_connection}}
+              {:noreply, Map.take(state, [:listen_socket, :topic]),
+               {:continue, :wait_for_connection}}
           end
       end
     end
@@ -123,7 +124,7 @@ defmodule Protohackers.BudgetChatServer do
     def handle_info({:tcp_closed, socket}, %{peer_socket: socket} = state) do
       Phoenix.Tracker.untrack(Tracker, Process.whereis(Tracker), state.topic, state.username)
 
-      {:noreply, Map.take(state, [:listen_socket]), {:continue, :wait_for_connection}}
+      {:noreply, Map.take(state, [:listen_socket, :topic]), {:continue, :wait_for_connection}}
     end
 
     def handle_info({:join, username, _metadata}, state) do
