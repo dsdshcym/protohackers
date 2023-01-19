@@ -29,7 +29,18 @@ defmodule Protohackers.UnusualDatabaseServer do
   def init(init_arg \\ []) do
     port = Keyword.get(init_arg, :port, 0)
 
-    {:ok, socket} = :gen_udp.open(port, mode: :binary, active: true)
+    address =
+      case System.fetch_env("FLY_APP_NAME") do
+        {:ok, _} ->
+          # see https://fly.io/docs/app-guides/udp-and-tcp/#the-fly-global-services-address
+          {:ok, fly_global_ip} = :inet.getaddr(~c"fly-global-services", :inet)
+          fly_global_ip
+
+        :error ->
+          {0, 0, 0, 0}
+      end
+
+    {:ok, socket} = :gen_udp.open(port, mode: :binary, active: true, ip: address)
 
     {:ok, %{socket: socket, kv: KV.new()}}
   end
