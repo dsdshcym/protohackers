@@ -15,6 +15,7 @@ defmodule Protohackers.Application do
       # Starts a worker by calling: Protohackers.Worker.start_link(arg)
       # {Protohackers.Worker, arg}
       {Protohackers.MeanServer, port: 5002},
+      {Protohackers.UnusualDatabaseServer, port: 5004},
       {Phoenix.PubSub, name: Protohackers.PubSub},
       {Protohackers.BudgetChatServer.Tracker,
        [name: Protohackers.BudgetChatServer.Tracker, pubsub_server: Protohackers.PubSub]}
