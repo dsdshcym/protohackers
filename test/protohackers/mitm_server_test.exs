@@ -196,7 +196,17 @@ defmodule Protohackers.MITMServerTest do
       assert Protohackers.MITMServer.modify_boguscoin_address(
                "  7F1u3wSD5RbOHQmupo9nx4TnhQ  ",
                "test"
-             ) == "  7F1u3wSD5RbOHQmupo9nx4TnhQ  "
+             ) == "  test  "
+
+      assert Protohackers.MITMServer.modify_boguscoin_address(
+               "This is too long 7dl9ts6Ip2M6sj5FwqQccJ4uCUGzq582srki\n",
+               "tony"
+             ) == "This is too long 7dl9ts6Ip2M6sj5FwqQccJ4uCUGzq582srki\n"
+
+      assert Protohackers.MITMServer.modify_boguscoin_address(
+               "This is too short 7dl9ts6Ip2M6sj5FwqQccJ4\n",
+               "tony"
+             ) == "This is too short 7dl9ts6Ip2M6sj5FwqQccJ4\n"
     end
 
     test "replaces Boguscoin address with  tony_address" do

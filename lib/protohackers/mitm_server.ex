@@ -70,6 +70,6 @@ defmodule Protohackers.MITMServer do
   end
 
   def modify_boguscoin_address(data, tony_address) do
-    String.replace(data, ~r/(?<= ||^)7[[:alnum:]]{25,34}(?>= ||$)/, tony_address)
+    String.replace(data, ~r/(?<=^|\s)7[[:alnum:]]{25,34}(?=\s|$)/, tony_address)
   end
 end
