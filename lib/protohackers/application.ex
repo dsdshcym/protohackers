@@ -18,12 +18,23 @@ defmodule Protohackers.Application do
       {Protohackers.UnusualDatabaseServer, port: 5004},
       {Phoenix.PubSub, name: Protohackers.PubSub},
       {Protohackers.BudgetChatServer.Tracker,
-       [name: Protohackers.BudgetChatServer.Tracker, pubsub_server: Protohackers.PubSub]}
+       [name: Protohackers.BudgetChatServer.Tracker, pubsub_server: Protohackers.PubSub]},
+      {DynamicSupervisor, name: Protohackers.MITMServer.DynamicSupervisor}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Protohackers.Supervisor]
-    Supervisor.start_link(children, opts)
+    result = Supervisor.start_link(children, opts)
+
+    {:ok, _} =
+      Protohackers.MITMServer.start(
+        %{host: ~c"chat.protohackers.com", port: 16963},
+        "7YWHMfk9JZe0LM0g1ZauHuiSxhI",
+        port: 5005,
+        pool_size: 100
+      )
+
+    result
   end
 end

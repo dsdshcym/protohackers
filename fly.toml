@@ -49,3 +49,9 @@ processes = []
   protocol = "udp"
   [[services.ports]]
     port = 5004
+
+[[services]]
+  internal_port = 5005
+  protocol = "tcp"
+  [[services.ports]]
+    port = 5005
