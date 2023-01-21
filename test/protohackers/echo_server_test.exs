@@ -1,10 +1,18 @@
 defmodule Protohackers.EchoServerTest do
   use ExUnit.Case, async: true
 
-  test "echos tcp binary back" do
-    {:ok, port} = Protohackers.EchoServer.start_link(0)
+  defp start_server(port, opts \\ []) do
+    {:ok, pid} = ThousandIsland.start_link(port: port, handler_module: Protohackers.EchoServer)
 
-    {:ok, socket} = :gen_tcp.connect('localhost', port, [:binary, active: false])
+    {:ok, %{port: port}} = ThousandIsland.listener_info(pid)
+
+    {:ok, port}
+  end
+
+  test "echos tcp binary back" do
+    {:ok, port} = start_server(0)
+
+    {:ok, socket} = :gen_tcp.connect('localhost', port, mode: :binary, active: false)
     :gen_tcp.send(socket, "test binary")
 
     assert {:ok, "test binary"} = :gen_tcp.recv(socket, 0)
@@ -13,7 +21,7 @@ defmodule Protohackers.EchoServerTest do
   end
 
   test "client shutdown write first" do
-    {:ok, port} = Protohackers.EchoServer.start_link(0)
+    {:ok, port} = start_server(0)
 
     {:ok, socket} = :gen_tcp.connect('localhost', port, [:binary, active: false])
     :gen_tcp.send(socket, "test binary")
@@ -26,7 +34,7 @@ defmodule Protohackers.EchoServerTest do
   end
 
   test "client sends binary several times" do
-    {:ok, port} = Protohackers.EchoServer.start_link(0)
+    {:ok, port} = start_server(0)
 
     {:ok, socket} = :gen_tcp.connect('localhost', port, [:binary, active: false])
     :gen_tcp.send(socket, "test")
@@ -41,7 +49,7 @@ defmodule Protohackers.EchoServerTest do
   end
 
   test "handles at least 5 simultaneous clients" do
-    {:ok, port} = Protohackers.EchoServer.start_link(0, pool_size: 5)
+    {:ok, port} = start_server(0, pool_size: 5)
 
     1..5
     |> Enum.map(fn _index ->
@@ -65,7 +73,7 @@ defmodule Protohackers.EchoServerTest do
   end
 
   test "timeout so that server can handle next client when pool is used up" do
-    {:ok, port} = Protohackers.EchoServer.start_link(0, pool_size: 2)
+    {:ok, port} = start_server(0, pool_size: 2)
 
     1..3
     |> Enum.map(fn _index ->

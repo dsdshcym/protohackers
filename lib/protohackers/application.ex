@@ -7,13 +7,13 @@ defmodule Protohackers.Application do
 
   @impl true
   def start(_type, _args) do
-    {:ok, 5678} = Protohackers.EchoServer.start_link(5678)
     {:ok, 5001} = Protohackers.PrimeServer.start_link(5001)
     {:ok, 5003} = Protohackers.BudgetChatServer.start_link(port: 5003, topic: "chatroom")
 
     children = [
       # Starts a worker by calling: Protohackers.Worker.start_link(arg)
       # {Protohackers.Worker, arg}
+      {ThousandIsland, port: 5678, handler_module: Protohackers.EchoServer},
       {Protohackers.MeanServer, port: 5002},
       {Protohackers.UnusualDatabaseServer, port: 5004},
       {Phoenix.PubSub, name: Protohackers.PubSub},
