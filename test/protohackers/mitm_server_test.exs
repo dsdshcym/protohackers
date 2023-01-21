@@ -68,9 +68,16 @@ defmodule Protohackers.MITMServerTest do
   end
 
   defp start_mitm(upstream, tony_address \\ "just_for_test", pool_size \\ 1) do
-    {:ok, socket} = Protohackers.MITMServer.start(upstream, tony_address, pool_size: pool_size)
+    pid =
+      start_supervised!({
+        ThousandIsland,
+        port: 0,
+        handler_module: Protohackers.MITMServer,
+        handler_options: %{upstream: upstream, tony_address: tony_address},
+        num_acceptors: pool_size
+      })
 
-    {:ok, port} = :inet.port(socket)
+    {:ok, %{port: port}} = ThousandIsland.listener_info(pid)
 
     %{
       host: ~c"localhost",

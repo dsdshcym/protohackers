@@ -19,22 +19,24 @@ defmodule Protohackers.Application do
       {Phoenix.PubSub, name: Protohackers.PubSub},
       {Protohackers.BudgetChatServer.Tracker,
        [name: Protohackers.BudgetChatServer.Tracker, pubsub_server: Protohackers.PubSub]},
-      {DynamicSupervisor, name: Protohackers.MITMServer.DynamicSupervisor}
+      Supervisor.child_spec(
+        {
+          ThousandIsland,
+          port: 5005,
+          handler_module: Protohackers.MITMServer,
+          handler_options: %{
+            upstream: %{host: ~c"chat.protohackers.com", port: 16963},
+            tony_address: "7YWHMfk9JZe0LM0g1ZauHuiSxhI"
+          },
+          num_acceptors: 10
+        },
+        id: :mitm_server
+      )
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Protohackers.Supervisor]
-    result = Supervisor.start_link(children, opts)
-
-    {:ok, _} =
-      Protohackers.MITMServer.start(
-        %{host: ~c"chat.protohackers.com", port: 16963},
-        "7YWHMfk9JZe0LM0g1ZauHuiSxhI",
-        port: 5005,
-        pool_size: 100
-      )
-
-    result
+    Supervisor.start_link(children, opts)
   end
 end
