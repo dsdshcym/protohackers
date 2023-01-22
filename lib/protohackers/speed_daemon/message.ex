@@ -89,4 +89,57 @@ defmodule Protohackers.SpeedDaemon.Message do
       parse_repeated(times - 1, parser, rest, [result | acc])
     end
   end
+
+  # server -> client
+
+  defmodule Error do
+    @enforce_keys [:msg]
+    defstruct @enforce_keys
+  end
+
+  defmodule Ticket do
+    @enforce_keys [
+      :plate,
+      :road,
+      :from_mile,
+      :from_timestamp,
+      :to_mile,
+      :to_timestamp,
+      :speed
+    ]
+
+    defstruct @enforce_keys
+  end
+
+  defmodule Heartbeat do
+    @enforce_keys []
+    defstruct @enforce_keys
+  end
+
+  def encode(%Error{} = error) do
+    <<0x10>> <> encode_str(error.msg)
+  end
+
+  def encode(%Ticket{} = ticket) do
+    <<0x21>> <>
+      encode_str(ticket.plate) <>
+      encode_unsigned_int(16, ticket.road) <>
+      encode_unsigned_int(16, ticket.from_mile) <>
+      encode_unsigned_int(32, ticket.from_timestamp) <>
+      encode_unsigned_int(16, ticket.to_mile) <>
+      encode_unsigned_int(32, ticket.to_timestamp) <>
+      encode_unsigned_int(16, ticket.speed)
+  end
+
+  def encode(%Heartbeat{}) do
+    <<0x41>>
+  end
+
+  defp encode_str(string) do
+    <<byte_size(string), string::binary>>
+  end
+
+  defp encode_unsigned_int(bit_size, int) do
+    <<int::size(bit_size)>>
+  end
 end
