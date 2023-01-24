@@ -4,6 +4,32 @@ defprotocol Protohackers.SpeedDaemon.Repository do
   def query(impl, filter, opts \\ [])
 end
 
+defmodule Protohackers.SpeedDaemon.Repository.Agent do
+  defstruct agent: nil
+
+  def new(repository) do
+    {:ok, agent} = Agent.start_link(fn -> repository end)
+
+    %__MODULE__{agent: agent}
+  end
+
+  defimpl Protohackers.SpeedDaemon.Repository do
+    def add(repo, model, map) do
+      :ok =
+        Agent.update(repo.agent, fn wrapped_repo ->
+          {:ok, wrapped_repo} = Protohackers.SpeedDaemon.Repository.add(wrapped_repo, model, map)
+          wrapped_repo
+        end)
+
+      {:ok, repo}
+    end
+
+    def query(repo, filter, opts) do
+      Agent.get(repo.agent, &Protohackers.SpeedDaemon.Repository.query(&1, filter, opts))
+    end
+  end
+end
+
 defmodule Protohackers.SpeedDaemon.Repository.InMemory do
   defstruct cameras: [], observations: [], dispatched_tickets: []
 
