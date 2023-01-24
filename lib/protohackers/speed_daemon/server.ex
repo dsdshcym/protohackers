@@ -16,12 +16,17 @@ defmodule Protohackers.SpeedDaemon.Server do
 
   @impl ThousandIsland.Handler
   def handle_data(data, socket, state) do
-    case Protohackers.SpeedDaemon.Message.decode(state.buffer <> data) do
-      {:ok, message, rest} ->
-        case handle_client_message(state, message) do
-          {:noreply, new_state} ->
-            {:continue, %{new_state | buffer: rest}}
+    case Protohackers.SpeedDaemon.Message.decode_many(state.buffer <> data) do
+      {:ok, messages, rest} ->
+        case Enum.reduce_while(messages, state, fn message, state ->
+               case handle_client_message(state, message) do
+                 {:noreply, new_state} ->
+                   {:cont, new_state}
 
+                 {:error, message} ->
+                   {:halt, {:error, message}}
+               end
+             end) do
           {:error, message} ->
             ThousandIsland.Socket.send(
               socket,
@@ -31,6 +36,9 @@ defmodule Protohackers.SpeedDaemon.Server do
             )
 
             {:close, state}
+
+          new_state ->
+            {:continue, %{new_state | buffer: rest}}
         end
     end
   end

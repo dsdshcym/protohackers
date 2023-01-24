@@ -21,6 +21,16 @@ defmodule Protohackers.SpeedDaemon.Message do
     defstruct @enforce_keys
   end
 
+  def decode_many(binary, acc \\ []) do
+    case decode(binary) do
+      {:ok, message, rest} ->
+        decode_many(rest, [message | acc])
+
+      {:error, _} ->
+        {:ok, Enum.reverse(acc), binary}
+    end
+  end
+
   def decode(<<0x20, rest::binary>>) do
     with {:ok, plate, rest} <- parse_string(rest),
          {:ok, timestamp, rest} <- parse_unsigned(32, rest) do
@@ -66,6 +76,10 @@ defmodule Protohackers.SpeedDaemon.Message do
         rest
       }
     end
+  end
+
+  def decode(_) do
+    {:error, :unmatched}
   end
 
   defp parse_string(<<str_size, str::binary-size(str_size), rest::binary>>) do
