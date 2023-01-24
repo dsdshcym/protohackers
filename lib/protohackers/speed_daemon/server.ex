@@ -4,12 +4,14 @@ defmodule Protohackers.SpeedDaemon.Server do
   @impl ThousandIsland.Handler
   def handle_connection(_socket, opts) do
     repo = Keyword.fetch!(opts, :repo)
+    registry = Keyword.fetch!(opts, :registry)
 
     {:continue,
      %{
        want_heartbeat: nil,
        client: nil,
        repo: repo,
+       registry: registry,
        buffer: ""
      }}
   end
@@ -89,6 +91,10 @@ defmodule Protohackers.SpeedDaemon.Server do
         %{client: nil} = state,
         %Protohackers.SpeedDaemon.Message.IAmDispatcher{} = dispatcher
       ) do
+    for road <- dispatcher.roads do
+      {:ok, _owner} = Registry.register(state.registry, road, true)
+    end
+
     {:noreply, %{state | client: dispatcher}}
   end
 

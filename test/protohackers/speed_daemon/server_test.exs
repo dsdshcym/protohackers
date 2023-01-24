@@ -1,18 +1,27 @@
 defmodule Protohackers.SpeedDaemon.ServerTest do
   use ExUnit.Case, async: true
 
-  defp start_server!() do
+  defp start_server!(opts \\ []) do
+    repo =
+      Keyword.get_lazy(opts, :repo, fn ->
+        Protohackers.SpeedDaemon.Repository.Agent.new(
+          Protohackers.SpeedDaemon.Repository.InMemory.new()
+        )
+      end)
+
+    registry =
+      Keyword.get_lazy(opts, :registry, fn ->
+        start_supervised!({Registry, keys: :unique, name: :speed_daemon_registry_for_test})
+
+        :speed_daemon_registry_for_test
+      end)
+
     {:ok, pid} =
       start_supervised({
         ThousandIsland,
         port: 0,
         handler_module: Protohackers.SpeedDaemon.Server,
-        handler_options: [
-          repo:
-            Protohackers.SpeedDaemon.Repository.Agent.new(
-              Protohackers.SpeedDaemon.Repository.InMemory.new()
-            )
-        ]
+        handler_options: [repo: repo, registry: registry]
       })
 
     {:ok, %{port: port}} = ThousandIsland.listener_info(pid)
