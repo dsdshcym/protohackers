@@ -132,4 +132,20 @@ defmodule Protohackers.SpeedDaemon.Server do
 
     {:noreply, {socket, state}}
   end
+
+  @impl GenServer
+  def handle_call(
+        {:send_ticket, ticket},
+        _from,
+        {socket, %{client: %Protohackers.SpeedDaemon.Message.IAmDispatcher{}} = state}
+      ) do
+    ThousandIsland.Socket.send(
+      socket,
+      Protohackers.SpeedDaemon.Message.Ticket
+      |> struct!(ticket)
+      |> Protohackers.SpeedDaemon.Message.encode()
+    )
+
+    {:reply, :ok, {socket, state}}
+  end
 end
