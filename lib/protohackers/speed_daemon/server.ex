@@ -19,6 +19,9 @@ defmodule Protohackers.SpeedDaemon.Server do
   @impl ThousandIsland.Handler
   def handle_data(data, socket, state) do
     case Protohackers.SpeedDaemon.Message.decode_many(state.buffer <> data) do
+      {:ok, [], binary} ->
+        {:continue, %{state | buffer: binary}}
+
       {:ok, messages, rest} ->
         case Enum.reduce_while(messages, state, fn message, state ->
                case handle_client_message(state, message) do
