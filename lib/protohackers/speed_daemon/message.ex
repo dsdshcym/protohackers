@@ -21,6 +21,36 @@ defmodule Protohackers.SpeedDaemon.Message do
     defstruct @enforce_keys
   end
 
+  # server -> client
+
+  defmodule Error do
+    @enforce_keys [:msg]
+    defstruct @enforce_keys
+  end
+
+  defmodule Ticket do
+    @enforce_keys [
+      :plate,
+      :road,
+      :from_mile,
+      :from_timestamp,
+      :to_mile,
+      :to_timestamp,
+      :speed
+    ]
+
+    defstruct @enforce_keys
+  end
+
+  defmodule Heartbeat do
+    @enforce_keys []
+    defstruct @enforce_keys
+  end
+
+  def encode(%Error{} = error) do
+    <<0x10>> <> encode_str(error.msg)
+  end
+
   def decode_many(binary, acc \\ []) do
     case decode(binary) do
       {:ok, message, rest} ->
@@ -78,6 +108,37 @@ defmodule Protohackers.SpeedDaemon.Message do
     end
   end
 
+  def decode(<<0x10, rest::binary>>) do
+    with {:ok, str, rest} <- parse_string(rest) do
+      {:ok, %Error{msg: str}, rest}
+    end
+  end
+
+  def decode(<<0x21, rest::binary>>) do
+    with {:ok, plate, rest} <- parse_string(rest),
+         {:ok, road, rest} <- parse_unsigned(16, rest),
+         {:ok, from_mile, rest} <- parse_unsigned(16, rest),
+         {:ok, from_timestamp, rest} <- parse_unsigned(32, rest),
+         {:ok, to_mile, rest} <- parse_unsigned(16, rest),
+         {:ok, to_timestamp, rest} <- parse_unsigned(32, rest),
+         {:ok, speed, rest} <- parse_unsigned(16, rest) do
+      {:ok,
+       %Ticket{
+         plate: plate,
+         road: road,
+         from_mile: from_mile,
+         from_timestamp: from_timestamp,
+         to_mile: to_mile,
+         to_timestamp: to_timestamp,
+         speed: speed
+       }, rest}
+    end
+  end
+
+  def decode(<<0x41>>) do
+    %Heartbeat{}
+  end
+
   def decode(_) do
     {:error, :unmatched}
   end
@@ -110,36 +171,6 @@ defmodule Protohackers.SpeedDaemon.Message do
     with {:ok, result, rest} <- parser.(binary) do
       parse_repeated(times - 1, parser, rest, [result | acc])
     end
-  end
-
-  # server -> client
-
-  defmodule Error do
-    @enforce_keys [:msg]
-    defstruct @enforce_keys
-  end
-
-  defmodule Ticket do
-    @enforce_keys [
-      :plate,
-      :road,
-      :from_mile,
-      :from_timestamp,
-      :to_mile,
-      :to_timestamp,
-      :speed
-    ]
-
-    defstruct @enforce_keys
-  end
-
-  defmodule Heartbeat do
-    @enforce_keys []
-    defstruct @enforce_keys
-  end
-
-  def encode(%Error{} = error) do
-    <<0x10>> <> encode_str(error.msg)
   end
 
   def encode(%Ticket{} = ticket) do

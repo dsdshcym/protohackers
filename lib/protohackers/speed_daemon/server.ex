@@ -124,6 +124,10 @@ defmodule Protohackers.SpeedDaemon.Server do
     {:noreply, %{state | repo: repo}}
   end
 
+  def handle_client_message(_state, unsupported_message) do
+    {:error, "received unexpected message: #{inspect(unsupported_message)}"}
+  end
+
   @impl GenServer
   def handle_info(:send_heartbeat, {socket, state}) do
     ThousandIsland.Socket.send(
