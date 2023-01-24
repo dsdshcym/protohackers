@@ -31,7 +31,8 @@ defmodule Protohackers.Application do
           num_acceptors: 10
         },
         id: :mitm_server
-      )
+      ),
+      {Protohackers.SpeedDaemon.Root, port: 5006}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
