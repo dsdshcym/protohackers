@@ -3,16 +3,20 @@ defmodule Protohackers.SpeedDaemon.Server do
 
   @impl ThousandIsland.Handler
   def handle_connection(_socket, []) do
-    {:continue, %{want_heartbeat: nil}}
+    {:continue,
+     %{
+       want_heartbeat: nil,
+       buffer: ""
+     }}
   end
 
   @impl ThousandIsland.Handler
   def handle_data(data, socket, state) do
-    case Protohackers.SpeedDaemon.Message.decode(data) do
-      {:ok, message, ""} ->
+    case Protohackers.SpeedDaemon.Message.decode(state.buffer <> data) do
+      {:ok, message, rest} ->
         case handle_client_message(state, message) do
           {:noreply, new_state} ->
-            {:continue, new_state}
+            {:continue, %{new_state | buffer: rest}}
 
           {:error, message} ->
             ThousandIsland.Socket.send(
