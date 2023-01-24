@@ -3,7 +3,7 @@ defmodule Protohackers.SpeedDaemon.Server do
 
   @impl ThousandIsland.Handler
   def handle_connection(_socket, []) do
-    {:continue, %{heartbeat_server: nil}}
+    {:continue, %{want_heartbeat: nil}}
   end
 
   @impl ThousandIsland.Handler
@@ -28,27 +28,27 @@ defmodule Protohackers.SpeedDaemon.Server do
   end
 
   def handle_client_message(
-        %{heartbeat_server: nil} = state,
+        %{want_heartbeat: nil} = state,
         %Protohackers.SpeedDaemon.Message.WantHeartBeat{interval: 0} = want_heartbeat
       ) do
-    {:noreply, %{state | heartbeat_server: want_heartbeat}}
+    {:noreply, %{state | want_heartbeat: want_heartbeat}}
   end
 
   def handle_client_message(
-        %{heartbeat_server: nil} = state,
+        %{want_heartbeat: nil} = state,
         %Protohackers.SpeedDaemon.Message.WantHeartBeat{interval: interval} = want_heartbeat
       )
       when interval > 0 do
     send(self(), :send_heartbeat)
 
-    {:noreply, %{state | heartbeat_server: want_heartbeat}}
+    {:noreply, %{state | want_heartbeat: want_heartbeat}}
   end
 
   def handle_client_message(
-        %{heartbeat_server: heartbeat_server},
+        %{want_heartbeat: want_heartbeat},
         %Protohackers.SpeedDaemon.Message.WantHeartBeat{}
       )
-      when not is_nil(heartbeat_server) do
+      when not is_nil(want_heartbeat) do
     {:error, "received WantHeartbeat again"}
   end
 
@@ -59,7 +59,7 @@ defmodule Protohackers.SpeedDaemon.Server do
       Protohackers.SpeedDaemon.Message.encode(%Protohackers.SpeedDaemon.Message.Heartbeat{})
     )
 
-    Process.send_after(self(), :send_heartbeat, state.heartbeat_server.interval * 100)
+    Process.send_after(self(), :send_heartbeat, state.want_heartbeat.interval * 100)
 
     {:noreply, {socket, state}}
   end
