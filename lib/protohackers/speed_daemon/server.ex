@@ -6,6 +6,7 @@ defmodule Protohackers.SpeedDaemon.Server do
     {:continue,
      %{
        want_heartbeat: nil,
+       client: nil,
        buffer: ""
      }}
   end
@@ -54,6 +55,36 @@ defmodule Protohackers.SpeedDaemon.Server do
       )
       when not is_nil(want_heartbeat) do
     {:error, "received WantHeartbeat again"}
+  end
+
+  def handle_client_message(
+        %{client: nil} = state,
+        %Protohackers.SpeedDaemon.Message.IAmCamera{} = camera
+      ) do
+    {:noreply, %{state | client: camera}}
+  end
+
+  def handle_client_message(
+        %{client: client},
+        %Protohackers.SpeedDaemon.Message.IAmCamera{}
+      )
+      when not is_nil(client) do
+    {:error, "received IAmCamera again"}
+  end
+
+  def handle_client_message(
+        %{client: nil} = state,
+        %Protohackers.SpeedDaemon.Message.IAmDispatcher{} = dispatcher
+      ) do
+    {:noreply, %{state | client: dispatcher}}
+  end
+
+  def handle_client_message(
+        %{client: client},
+        %Protohackers.SpeedDaemon.Message.IAmDispatcher{}
+      )
+      when not is_nil(client) do
+    {:error, "received IAmDispatcher again"}
   end
 
   @impl GenServer
