@@ -16,6 +16,8 @@ defmodule Protohackers.SpeedDaemon.ServerTest do
         :speed_daemon_registry_for_test
       end)
 
+    start_supervised!({Protohackers.SpeedDaemon.CoreDispatcher, repo: repo, registry: registry})
+
     {:ok, pid} =
       start_supervised({
         ThousandIsland,
@@ -108,5 +110,34 @@ defmodule Protohackers.SpeedDaemon.ServerTest do
         100
       )
     end
+  end
+
+  test "example session" do
+    repo =
+      Protohackers.SpeedDaemon.Repository.Agent.new(
+        Protohackers.SpeedDaemon.Repository.InMemory.new()
+      )
+
+    start_supervised!({Registry, keys: :unique, name: :speed_daemon_registry_for_test})
+    registry = :speed_daemon_registry_for_test
+
+    server = start_server!(repo: repo, registry: registry)
+    camera8 = start_client!(server)
+    camera9 = start_client!(server)
+    dispatcher = start_client!(server)
+
+    send_tcp_message(camera8, <<0x80, 0x00, 0x7B, 0x00, 0x08, 0x00, 0x3C>>)
+    send_tcp_message(camera8, <<0x20, 0x04, 0x55, 0x4E, 0x31, 0x58, 0x00, 0x00, 0x00, 0x00>>)
+
+    send_tcp_message(camera9, <<0x80, 0x00, 0x7B, 0x00, 0x09, 0x00, 0x3C>>)
+    send_tcp_message(camera9, <<0x20, 0x04, 0x55, 0x4E, 0x31, 0x58, 0x00, 0x00, 0x00, 0x2D>>)
+
+    send_tcp_message(dispatcher, <<0x81, 0x01, 0x00, 0x7B>>)
+
+    assert_tcp_receive(
+      dispatcher,
+      <<0x21, 0x04, 0x55, 0x4E, 0x31, 0x58, 0x00, 0x7B, 0x00, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x09, 0x00, 0x00, 0x00, 0x2D, 0x1F, 0x40>>
+    )
   end
 end
