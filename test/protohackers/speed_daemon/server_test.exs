@@ -11,7 +11,7 @@ defmodule Protohackers.SpeedDaemon.ServerTest do
 
     registry =
       Keyword.get_lazy(opts, :registry, fn ->
-        start_supervised!({Registry, keys: :unique, name: :speed_daemon_registry_for_test})
+        start_supervised!({Registry, keys: :duplicate, name: :speed_daemon_registry_for_test})
 
         :speed_daemon_registry_for_test
       end)
@@ -118,7 +118,7 @@ defmodule Protohackers.SpeedDaemon.ServerTest do
         Protohackers.SpeedDaemon.Repository.InMemory.new()
       )
 
-    start_supervised!({Registry, keys: :unique, name: :speed_daemon_registry_for_test})
+    start_supervised!({Registry, keys: :duplicate, name: :speed_daemon_registry_for_test})
     registry = :speed_daemon_registry_for_test
 
     server = start_server!(repo: repo, registry: registry)

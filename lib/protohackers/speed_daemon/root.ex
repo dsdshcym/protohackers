@@ -16,7 +16,7 @@ defmodule Protohackers.SpeedDaemon.Root do
     registry = :speed_daemon_registry
 
     children = [
-      {Registry, keys: :unique, name: registry},
+      {Registry, keys: :duplicate, name: registry},
       {Protohackers.SpeedDaemon.CoreDispatcher, repo: repo, registry: registry},
       {
         ThousandIsland,
