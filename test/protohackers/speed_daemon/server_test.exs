@@ -5,7 +5,14 @@ defmodule Protohackers.SpeedDaemon.ServerTest do
     {:ok, pid} =
       start_supervised({
         ThousandIsland,
-        port: 0, handler_module: Protohackers.SpeedDaemon.Server
+        port: 0,
+        handler_module: Protohackers.SpeedDaemon.Server,
+        handler_options: [
+          repo:
+            Protohackers.SpeedDaemon.Repository.Agent.new(
+              Protohackers.SpeedDaemon.Repository.InMemory.new()
+            )
+        ]
       })
 
     {:ok, %{port: port}} = ThousandIsland.listener_info(pid)

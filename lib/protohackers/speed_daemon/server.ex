@@ -2,11 +2,14 @@ defmodule Protohackers.SpeedDaemon.Server do
   use ThousandIsland.Handler
 
   @impl ThousandIsland.Handler
-  def handle_connection(_socket, []) do
+  def handle_connection(_socket, opts) do
+    repo = Keyword.fetch!(opts, :repo)
+
     {:continue,
      %{
        want_heartbeat: nil,
        client: nil,
+       repo: repo,
        buffer: ""
      }}
   end
