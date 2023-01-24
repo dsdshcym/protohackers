@@ -86,10 +86,18 @@ defmodule Protohackers.SpeedDaemon.Message do
     {:ok, str, rest}
   end
 
-  defp parse_unsigned(bit_size, binary) do
-    <<int::unsigned-size(bit_size), rest::binary>> = binary
+  defp parse_string(_) do
+    {:error, :string_unmatched}
+  end
 
-    {:ok, int, rest}
+  defp parse_unsigned(bit_size, binary) do
+    case binary do
+      <<int::unsigned-size(bit_size), rest::binary>> ->
+        {:ok, int, rest}
+
+      _ ->
+        {:error, :unsigned_unmatched}
+    end
   end
 
   defp parse_repeated(times, parser, binary, acc \\ [])
