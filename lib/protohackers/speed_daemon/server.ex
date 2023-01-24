@@ -72,7 +72,9 @@ defmodule Protohackers.SpeedDaemon.Server do
         %{client: nil} = state,
         %Protohackers.SpeedDaemon.Message.IAmCamera{} = camera
       ) do
-    {:noreply, %{state | client: camera}}
+    {:ok, repo} = Protohackers.SpeedDaemon.Repository.add(state.repo, :camera, camera)
+
+    {:noreply, %{state | client: camera, repo: repo}}
   end
 
   def handle_client_message(
