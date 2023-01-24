@@ -140,8 +140,8 @@ defmodule Protohackers.SpeedDaemon.Message do
     end
   end
 
-  def decode(<<0x41>>) do
-    %Heartbeat{}
+  def decode(<<0x41, rest::binary>>) do
+    {:ok, %Heartbeat{}, rest}
   end
 
   def decode(<<type, rest::binary>>)
