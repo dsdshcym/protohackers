@@ -15,16 +15,23 @@ defmodule Protohackers.SpeedDaemon.CoreDispatcher do
   end
 
   def handle_info(:run, state) do
-    Enum.map(
-      Protohackers.SpeedDaemon.Repository.query(state.repo, :tickets),
-      fn ticket ->
+    case Protohackers.SpeedDaemon.Repository.query(state.repo, :undispatched_ticket) do
+      nil ->
+        :do_nothing
+
+      ticket ->
         Registry.dispatch(state.registry, ticket.road, fn entries ->
-          Enum.find(entries, fn {pid, true} ->
-            match?(:ok, GenServer.call(pid, {:send_ticket, ticket}))
-          end)
+          if Enum.find(
+               entries,
+               fn {pid, true} ->
+                 match?(:ok, GenServer.call(pid, {:send_ticket, ticket}))
+               end
+             ),
+             do:
+               {:ok, _updated_repo} =
+                 Protohackers.SpeedDaemon.Repository.add(state.repo, :dispatched_ticket, ticket)
         end)
-      end
-    )
+    end
 
     schedule_run()
 

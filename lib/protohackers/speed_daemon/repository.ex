@@ -76,6 +76,20 @@ defmodule Protohackers.SpeedDaemon.Repository.InMemory do
       end)
     end
 
+    def query(repo, :dispatched_tickets, []) do
+      repo.dispatched_tickets
+    end
+
+    def query(repo, :undispatched_ticket, []) do
+      tickets = Protohackers.SpeedDaemon.Repository.query(repo, :tickets)
+      dispatched_tickets = Protohackers.SpeedDaemon.Repository.query(repo, :dispatched_tickets)
+
+      Enum.find(tickets, fn ticket ->
+        ticket not in dispatched_tickets and
+          not same_car_same_day?(dispatched_tickets, ticket)
+      end)
+    end
+
     def query(repo, :tickets, []) do
       repo
       |> query(:roads, [])
@@ -104,6 +118,18 @@ defmodule Protohackers.SpeedDaemon.Repository.InMemory do
               speed: round(speed * 100)
             }
       end)
+    end
+
+    defp same_car_same_day?(tickets, ticket) do
+      ticket_day = to_day(ticket.from_timestamp)
+
+      tickets
+      |> Enum.filter(&(&1.plate == ticket.plate))
+      |> Enum.any?(&(to_day(&1.from_timestamp) == ticket_day))
+    end
+
+    defp to_day(timestamp) do
+      floor(timestamp / 86400)
     end
   end
 end
