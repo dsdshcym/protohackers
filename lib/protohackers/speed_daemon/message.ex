@@ -1,4 +1,9 @@
 defmodule Protohackers.SpeedDaemon.Message do
+  defmodule Unknown do
+    @enforce_keys []
+    defstruct @enforce_keys
+  end
+
   # client -> server
 
   defmodule Observation do
@@ -137,6 +142,11 @@ defmodule Protohackers.SpeedDaemon.Message do
 
   def decode(<<0x41>>) do
     %Heartbeat{}
+  end
+
+  def decode(<<type, rest::binary>>)
+      when type not in [0x20, 0x40, 0x80, 0x81, 0x10, 0x21, 0x41] do
+    {:ok, %Unknown{}, rest}
   end
 
   def decode(_) do
