@@ -107,7 +107,7 @@ defmodule Protohackers.SpeedDaemon.Repository.InMemory do
             from.timestamp < to.timestamp,
             speed =
               3600 * abs(to.camera_mile - from.camera_mile) / (to.timestamp - from.timestamp),
-            speed >= road.limit,
+            speed >= road.limit + 0.5,
             do: %{
               plate: plate,
               road: from.road,
