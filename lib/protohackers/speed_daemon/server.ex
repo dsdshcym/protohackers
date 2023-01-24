@@ -100,6 +100,21 @@ defmodule Protohackers.SpeedDaemon.Server do
     {:error, "received IAmDispatcher again"}
   end
 
+  def handle_client_message(
+        %{client: %Protohackers.SpeedDaemon.Message.IAmCamera{}} = state,
+        %Protohackers.SpeedDaemon.Message.Observation{} = observation
+      ) do
+    {:ok, repo} =
+      Protohackers.SpeedDaemon.Repository.add(state.repo, :observation, %{
+        road: state.client.road,
+        camera_mile: state.client.mile,
+        plate: observation.plate,
+        timestamp: observation.timestamp
+      })
+
+    {:noreply, %{state | repo: repo}}
+  end
+
   @impl GenServer
   def handle_info(:send_heartbeat, {socket, state}) do
     ThousandIsland.Socket.send(
