@@ -32,7 +32,8 @@ defmodule Protohackers.Application do
         },
         id: :mitm_server
       ),
-      {Protohackers.SpeedDaemon.Root, port: 5006}
+      {Protohackers.SpeedDaemon.Root, port: 5006},
+      {Protohackers.JobCentre.Supervisor, port: 5009}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

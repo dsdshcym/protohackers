@@ -67,3 +67,15 @@ processes = []
 
   [[services.ports]]
     port = 5006
+
+[[services]]
+  internal_port = 5009
+  protocol = "tcp"
+
+  [services.concurrency]
+    hard_limit = 1500
+    soft_limit = 1250
+    type = "connections"
+
+  [[services.ports]]
+    port = 5009
