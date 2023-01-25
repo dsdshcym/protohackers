@@ -51,8 +51,6 @@ defmodule Protohackers.JobCentre.RepositoryTest do
                Protohackers.JobCentre.Repository.retrieve(repo, "test-client", ["test-queue"])
     end
 
-    test "does not return aborted jobs"
-
     test "does not return deleted jobs"
 
     test "returns the highest priority job" do
@@ -314,6 +312,27 @@ defmodule Protohackers.JobCentre.RepositoryTest do
 
       assert {:error, :not_found} =
                Protohackers.JobCentre.Repository.abort(repo, deleted_job.id, "test-client")
+    end
+
+    test "aborted job can be retrieved again (even by another client)" do
+      {:ok, repo} = Protohackers.JobCentre.Repository.Map.new()
+
+      {:ok, repo, inserted_job} =
+        Protohackers.JobCentre.Repository.insert(repo, %Protohackers.JobCentre.Job{
+          status: :pending,
+          queue: "test-queue",
+          priority: 100,
+          body: %{}
+        })
+
+      {:ok, repo, %{client: "test-client"} = retrieved_job} =
+        Protohackers.JobCentre.Repository.retrieve(repo, "test-client", ["test-queue"])
+
+      assert {:ok, repo, aborted_job} =
+               Protohackers.JobCentre.Repository.abort(repo, retrieved_job.id, "test-client")
+
+      assert {:ok, repo, _retrieved_job} =
+               Protohackers.JobCentre.Repository.retrieve(repo, "another-client", ["test-queue"])
     end
   end
 end
