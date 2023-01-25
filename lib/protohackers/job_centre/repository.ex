@@ -164,3 +164,83 @@ defmodule Protohackers.JobCentre.Repository.Agent do
     end
   end
 end
+
+defmodule Protohackers.JobCentre.Repository.Blocking do
+  @enforce_keys [:pid]
+  defstruct @enforce_keys
+
+  use GenServer
+
+  def new(repo) do
+    with {:ok, pid} <- GenServer.start_link(__MODULE__, repo) do
+      {:ok, %{pid: pid}}
+    end
+  end
+
+  def init(repo) do
+    {:ok, repo}
+  end
+
+  def handle_call(message, from, wrapped_repo) do
+    schedule({message, from}, 0)
+
+    {:noreply, wrapped_repo}
+  end
+
+  def handle_info({{:get_and_update, query, update_fn} = message_from_pair, from}, wrapped_repo) do
+    case Protohackers.JobCentre.Repository.get_and_update(wrapped_repo, query, update_fn) do
+      {:error, _} ->
+        schedule(message_from_pair, 1000)
+
+      {:ok, updated_repo, job} ->
+        GenServer.reply(from, {:ok, job})
+        {:noreply, updated_repo}
+    end
+  end
+
+  def handle_info({{:insert, record}, from} = message_from_pair, wrapped_repo) do
+    case Protohackers.JobCentre.Repository.insert(wrapped_repo, record) do
+      {:error, _} ->
+        schedule(message_from_pair, 1000)
+
+      {:ok, updated_repo, job} ->
+        GenServer.reply(from, {:ok, job})
+        {:noreply, updated_repo}
+    end
+  end
+
+  def handle_info({{:update, record}, from} = message_from_pair, wrapped_repo) do
+    case Protohackers.JobCentre.Repository.update(wrapped_repo, record) do
+      {:error, _} ->
+        schedule(message_from_pair, 1000)
+
+      {:ok, updated_repo, job} ->
+        GenServer.reply(from, {:ok, job})
+        {:noreply, updated_repo}
+    end
+  end
+
+  defp schedule(message_from_pair, after_in_ms) do
+    Process.send_after(self(), message_from_pair, after_in_ms)
+  end
+
+  defimpl Protohackers.JobCentre.Repository do
+    def get_and_update(%{pid: pid} = blocking, query, update_fn) do
+      {:ok, job} = GenServer.call(pid, {:get_and_update, query, update_fn}, :infinity)
+
+      {:ok, blocking, job}
+    end
+
+    def insert(%{pid: pid} = blocking, record) do
+      {:ok, job} = GenServer.call(pid, {:insert, record}, :infinity)
+
+      {:ok, blocking, job}
+    end
+
+    def update(%{pid: pid} = blocking, record) do
+      {:ok, job} = GenServer.call(pid, {:insert, record}, :infinity)
+
+      {:ok, blocking, job}
+    end
+  end
+end
