@@ -19,6 +19,13 @@ defmodule Protohackers.JobCentre.Server do
     end
   end
 
+  @impl ThousandIsland.Handler
+  def handle_close(_socket, state) do
+    Protohackers.JobCentre.Repository.abort_all(state.repo, state.this_client)
+
+    :ok
+  end
+
   defp handle_request(socket, state, %{
          "request" => "put",
          "queue" => queue,

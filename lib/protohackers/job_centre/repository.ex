@@ -39,6 +39,14 @@ defprotocol Protohackers.JobCentre.Repository do
     end)
   end
 
+  Kernel.def abort_all(repo, client) do
+    for job <- query(repo, client: client) do
+      abort(repo, job.id, client)
+    end
+  end
+
+  def query(repo, query)
+
   def get_and_update(repo, query, update_fn)
 
   def insert(repo, record)
@@ -55,23 +63,24 @@ defmodule Protohackers.JobCentre.Repository.Map do
   end
 
   defimpl Protohackers.JobCentre.Repository do
+    def query(repo, query) do
+      Enum.reduce(query, repo.jobs, fn
+        {:order_by, {sorter, key}}, jobs ->
+          Enum.sort_by(jobs, &Map.fetch!(&1, key), sorter)
+
+        {key, {:in, expected_values}}, jobs ->
+          Enum.filter(jobs, &(Map.fetch!(&1, key) in expected_values))
+
+        {key, {:not, expected_value}}, jobs ->
+          Enum.filter(jobs, &(Map.fetch!(&1, key) != expected_value))
+
+        {key, expected_value}, jobs ->
+          Enum.filter(jobs, &(Map.fetch!(&1, key) == expected_value))
+      end)
+    end
+
     def get_and_update(repo, query, update_fn) do
-      jobs =
-        Enum.reduce(query, repo.jobs, fn
-          {:order_by, {sorter, key}}, jobs ->
-            Enum.sort_by(jobs, &Map.fetch!(&1, key), sorter)
-
-          {key, {:in, expected_values}}, jobs ->
-            Enum.filter(jobs, &(Map.fetch!(&1, key) in expected_values))
-
-          {key, {:not, expected_value}}, jobs ->
-            Enum.filter(jobs, &(Map.fetch!(&1, key) != expected_value))
-
-          {key, expected_value}, jobs ->
-            Enum.filter(jobs, &(Map.fetch!(&1, key) == expected_value))
-        end)
-
-      case jobs do
+      case query(repo, query) do
         [job | _] ->
           update(repo, update_fn.(job))
 
@@ -109,6 +118,12 @@ defmodule Protohackers.JobCentre.Repository.Agent do
   end
 
   defimpl Protohackers.JobCentre.Repository do
+    def query(repo, query) do
+      Agent.get(repo.agent, fn wrapped_repo ->
+        Protohackers.JobCentre.Repository.query(wrapped_repo, query)
+      end)
+    end
+
     def get_and_update(repo, query, update_fn) do
       case Agent.get_and_update(repo.agent, fn wrapped_repo ->
              case Protohackers.JobCentre.Repository.get_and_update(wrapped_repo, query, update_fn) do
