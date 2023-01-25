@@ -25,6 +25,12 @@ defprotocol Protohackers.JobCentre.Repository do
     )
   end
 
+  Kernel.def delete(repo, job_id) do
+    get_and_update(repo, [id: job_id, status: {:not, :deleted}], fn job ->
+      %{job | status: :deleted}
+    end)
+  end
+
   def get_and_update(repo, query, update_fn)
 
   def insert(repo, record)
@@ -49,6 +55,9 @@ defmodule Protohackers.JobCentre.Repository.Map do
 
           {key, {:in, expected_values}}, jobs ->
             Enum.filter(jobs, &(Map.fetch!(&1, key) in expected_values))
+
+          {key, {:not, expected_value}}, jobs ->
+            Enum.filter(jobs, &(Map.fetch!(&1, key) != expected_value))
 
           {key, expected_value}, jobs ->
             Enum.filter(jobs, &(Map.fetch!(&1, key) == expected_value))

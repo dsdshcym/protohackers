@@ -5,5 +5,5 @@ defmodule Protohackers.JobCentre.Job do
     :body
   ]
 
-  defstruct @enforce_keys ++ [:id, :deleted?, :client, status: :pending]
+  defstruct @enforce_keys ++ [:id, :client, status: :pending]
 end

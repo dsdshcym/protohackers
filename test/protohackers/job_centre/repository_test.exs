@@ -161,4 +161,43 @@ defmodule Protohackers.JobCentre.RepositoryTest do
                Protohackers.JobCentre.Repository.get(repo, id: retrieved_job.id)
     end
   end
+
+  describe "delete/2" do
+    test "returns {:error, :not_found} when no job" do
+      {:ok, repo} = Protohackers.JobCentre.Repository.Map.new()
+
+      assert {:error, :not_found} = Protohackers.JobCentre.Repository.delete(repo, 1)
+    end
+
+    test "sets :status to :deleted" do
+      {:ok, repo} = Protohackers.JobCentre.Repository.Map.new()
+
+      {:ok, repo, job} =
+        Protohackers.JobCentre.Repository.insert(repo, %Protohackers.JobCentre.Job{
+          status: :pending,
+          queue: "test-queue",
+          priority: 100,
+          body: %{}
+        })
+
+      assert {:ok, repo, %{status: :deleted} = _deleted_job} =
+               Protohackers.JobCentre.Repository.delete(repo, job.id)
+    end
+
+    test "returns {:error, :not_found} when job was already deleted" do
+      {:ok, repo} = Protohackers.JobCentre.Repository.Map.new()
+
+      {:ok, repo, job} =
+        Protohackers.JobCentre.Repository.insert(repo, %Protohackers.JobCentre.Job{
+          status: :pending,
+          queue: "test-queue",
+          priority: 100,
+          body: %{}
+        })
+
+      {:ok, repo, _deleted_job} = Protohackers.JobCentre.Repository.delete(repo, job.id)
+
+      assert {:error, :not_found} = Protohackers.JobCentre.Repository.delete(repo, job.id)
+    end
+  end
 end
