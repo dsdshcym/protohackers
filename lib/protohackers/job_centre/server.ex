@@ -32,7 +32,7 @@ defmodule Protohackers.JobCentre.Server do
          "job" => job_body,
          "pri" => priority
        })
-       when is_binary(queue) and is_integer(priority) and priority > 0 do
+       when is_binary(queue) and is_integer(priority) and priority >= 0 do
     {:ok, updated_repo, inserted_job} =
       Protohackers.JobCentre.Repository.insert(state.repo, %Protohackers.JobCentre.Job{
         queue: queue,
