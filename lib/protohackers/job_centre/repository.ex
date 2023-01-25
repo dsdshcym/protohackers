@@ -173,7 +173,7 @@ defmodule Protohackers.JobCentre.Repository.Blocking do
 
   def new(repo) do
     with {:ok, pid} <- GenServer.start_link(__MODULE__, repo) do
-      {:ok, %{pid: pid}}
+      {:ok, %__MODULE__{pid: pid}}
     end
   end
 
