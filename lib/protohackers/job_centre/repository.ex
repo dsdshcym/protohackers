@@ -187,7 +187,7 @@ defmodule Protohackers.JobCentre.Repository.Blocking do
     {:noreply, wrapped_repo}
   end
 
-  def handle_info({{:get_and_update, query, update_fn} = message_from_pair, from}, wrapped_repo) do
+  def handle_info({{:get_and_update, query, update_fn}, from} = message_from_pair, wrapped_repo) do
     case Protohackers.JobCentre.Repository.get_and_update(wrapped_repo, query, update_fn) do
       {:error, _} ->
         schedule(message_from_pair, 1000)
