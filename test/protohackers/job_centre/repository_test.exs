@@ -51,8 +51,6 @@ defmodule Protohackers.JobCentre.RepositoryTest do
                Protohackers.JobCentre.Repository.retrieve(repo, "test-client", ["test-queue"])
     end
 
-    test "does not return deleted jobs"
-
     test "returns the highest priority job" do
       {:ok, repo} = Protohackers.JobCentre.Repository.Map.new()
 
@@ -196,6 +194,23 @@ defmodule Protohackers.JobCentre.RepositoryTest do
       {:ok, repo, _deleted_job} = Protohackers.JobCentre.Repository.delete(repo, job.id)
 
       assert {:error, :not_found} = Protohackers.JobCentre.Repository.delete(repo, job.id)
+    end
+
+    test "deleted job cannot be retrieved" do
+      {:ok, repo} = Protohackers.JobCentre.Repository.Map.new()
+
+      {:ok, repo, job} =
+        Protohackers.JobCentre.Repository.insert(repo, %Protohackers.JobCentre.Job{
+          status: :pending,
+          queue: "test-queue",
+          priority: 100,
+          body: %{}
+        })
+
+      {:ok, repo, _deleted_job} = Protohackers.JobCentre.Repository.delete(repo, job.id)
+
+      assert {:error, :not_found} =
+               Protohackers.JobCentre.Repository.retrieve(repo, "test-client", ["test-queue"])
     end
   end
 
