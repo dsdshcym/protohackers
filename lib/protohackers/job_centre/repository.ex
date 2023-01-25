@@ -31,6 +31,14 @@ defprotocol Protohackers.JobCentre.Repository do
     end)
   end
 
+  Kernel.def abort(repo, job_id, client) do
+    get_and_update(repo, [id: job_id, status: :working, client: client], fn job ->
+      job
+      |> Map.put(:status, :pending)
+      |> Map.put(:client, nil)
+    end)
+  end
+
   def get_and_update(repo, query, update_fn)
 
   def insert(repo, record)

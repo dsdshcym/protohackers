@@ -200,4 +200,120 @@ defmodule Protohackers.JobCentre.RepositoryTest do
       assert {:error, :not_found} = Protohackers.JobCentre.Repository.delete(repo, job.id)
     end
   end
+
+  describe "abort/3" do
+    test "returns {:error, :not_found} when no job" do
+      {:ok, repo} = Protohackers.JobCentre.Repository.Map.new()
+
+      assert {:error, :not_found} =
+               Protohackers.JobCentre.Repository.abort(repo, 1, "test-client")
+    end
+
+    test "can only abort retrieved job from the same client" do
+      {:ok, repo} = Protohackers.JobCentre.Repository.Map.new()
+
+      {:ok, repo, inserted_job} =
+        Protohackers.JobCentre.Repository.insert(repo, %Protohackers.JobCentre.Job{
+          status: :pending,
+          queue: "test-queue",
+          priority: 100,
+          body: %{}
+        })
+
+      {:ok, repo, retrieved_job} =
+        Protohackers.JobCentre.Repository.retrieve(repo, "test-client", ["test-queue"])
+
+      assert {:ok, repo, _aborted_job} =
+               Protohackers.JobCentre.Repository.abort(repo, retrieved_job.id, "test-client")
+    end
+
+    test "sets job.status back to :pending" do
+      {:ok, repo} = Protohackers.JobCentre.Repository.Map.new()
+
+      {:ok, repo, inserted_job} =
+        Protohackers.JobCentre.Repository.insert(repo, %Protohackers.JobCentre.Job{
+          status: :pending,
+          queue: "test-queue",
+          priority: 100,
+          body: %{}
+        })
+
+      {:ok, repo, %{status: :working} = retrieved_job} =
+        Protohackers.JobCentre.Repository.retrieve(repo, "test-client", ["test-queue"])
+
+      assert {:ok, repo, %{status: :pending} = _aborted_job} =
+               Protohackers.JobCentre.Repository.abort(repo, retrieved_job.id, "test-client")
+    end
+
+    test "sets job.client back to nil" do
+      {:ok, repo} = Protohackers.JobCentre.Repository.Map.new()
+
+      {:ok, repo, inserted_job} =
+        Protohackers.JobCentre.Repository.insert(repo, %Protohackers.JobCentre.Job{
+          status: :pending,
+          queue: "test-queue",
+          priority: 100,
+          body: %{}
+        })
+
+      {:ok, repo, %{client: "test-client"} = retrieved_job} =
+        Protohackers.JobCentre.Repository.retrieve(repo, "test-client", ["test-queue"])
+
+      assert {:ok, repo, %{client: nil} = _aborted_job} =
+               Protohackers.JobCentre.Repository.abort(repo, retrieved_job.id, "test-client")
+    end
+
+    test "cannot abort un-retrieved job" do
+      {:ok, repo} = Protohackers.JobCentre.Repository.Map.new()
+
+      {:ok, repo, inserted_job} =
+        Protohackers.JobCentre.Repository.insert(repo, %Protohackers.JobCentre.Job{
+          status: :pending,
+          queue: "test-queue",
+          priority: 100,
+          body: %{}
+        })
+
+      assert {:error, :not_found} =
+               Protohackers.JobCentre.Repository.abort(repo, inserted_job.id, "test-client")
+    end
+
+    test "cannot abort retrieved job from another client" do
+      {:ok, repo} = Protohackers.JobCentre.Repository.Map.new()
+
+      {:ok, repo, inserted_job} =
+        Protohackers.JobCentre.Repository.insert(repo, %Protohackers.JobCentre.Job{
+          status: :pending,
+          queue: "test-queue",
+          priority: 100,
+          body: %{}
+        })
+
+      {:ok, repo, %{client: "test-client"} = retrieved_job} =
+        Protohackers.JobCentre.Repository.retrieve(repo, "test-client", ["test-queue"])
+
+      assert {:error, :not_found} =
+               Protohackers.JobCentre.Repository.abort(repo, retrieved_job.id, "another-client")
+    end
+
+    test "cannot abort a deleted job" do
+      {:ok, repo} = Protohackers.JobCentre.Repository.Map.new()
+
+      {:ok, repo, inserted_job} =
+        Protohackers.JobCentre.Repository.insert(repo, %Protohackers.JobCentre.Job{
+          status: :pending,
+          queue: "test-queue",
+          priority: 100,
+          body: %{}
+        })
+
+      {:ok, repo, %{client: "test-client"} = retrieved_job} =
+        Protohackers.JobCentre.Repository.retrieve(repo, "test-client", ["test-queue"])
+
+      {:ok, repo, deleted_job} = Protohackers.JobCentre.Repository.delete(repo, retrieved_job.id)
+
+      assert {:error, :not_found} =
+               Protohackers.JobCentre.Repository.abort(repo, deleted_job.id, "test-client")
+    end
+  end
 end
