@@ -190,7 +190,7 @@ defmodule Protohackers.JobCentre.Repository.Blocking do
   def handle_info({{:get_and_update, query, update_fn}, from} = message_from_pair, wrapped_repo) do
     case Protohackers.JobCentre.Repository.get_and_update(wrapped_repo, query, update_fn) do
       {:error, _} ->
-        schedule(message_from_pair, 1000)
+        schedule(message_from_pair, 100)
         {:noreply, wrapped_repo}
 
       {:ok, updated_repo, job} ->
@@ -202,7 +202,7 @@ defmodule Protohackers.JobCentre.Repository.Blocking do
   def handle_info({{:insert, record}, from} = message_from_pair, wrapped_repo) do
     case Protohackers.JobCentre.Repository.insert(wrapped_repo, record) do
       {:error, _} ->
-        schedule(message_from_pair, 1000)
+        schedule(message_from_pair, 100)
         {:noreply, wrapped_repo}
 
       {:ok, updated_repo, job} ->
@@ -214,7 +214,7 @@ defmodule Protohackers.JobCentre.Repository.Blocking do
   def handle_info({{:update, record}, from} = message_from_pair, wrapped_repo) do
     case Protohackers.JobCentre.Repository.update(wrapped_repo, record) do
       {:error, _} ->
-        schedule(message_from_pair, 1000)
+        schedule(message_from_pair, 100)
         {:noreply, wrapped_repo}
 
       {:ok, updated_repo, job} ->
