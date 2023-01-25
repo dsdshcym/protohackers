@@ -191,6 +191,7 @@ defmodule Protohackers.JobCentre.Repository.Blocking do
     case Protohackers.JobCentre.Repository.get_and_update(wrapped_repo, query, update_fn) do
       {:error, _} ->
         schedule(message_from_pair, 1000)
+        {:noreply, wrapped_repo}
 
       {:ok, updated_repo, job} ->
         GenServer.reply(from, {:ok, job})
@@ -202,6 +203,7 @@ defmodule Protohackers.JobCentre.Repository.Blocking do
     case Protohackers.JobCentre.Repository.insert(wrapped_repo, record) do
       {:error, _} ->
         schedule(message_from_pair, 1000)
+        {:noreply, wrapped_repo}
 
       {:ok, updated_repo, job} ->
         GenServer.reply(from, {:ok, job})
@@ -213,6 +215,7 @@ defmodule Protohackers.JobCentre.Repository.Blocking do
     case Protohackers.JobCentre.Repository.update(wrapped_repo, record) do
       {:error, _} ->
         schedule(message_from_pair, 1000)
+        {:noreply, wrapped_repo}
 
       {:ok, updated_repo, job} ->
         GenServer.reply(from, {:ok, job})
