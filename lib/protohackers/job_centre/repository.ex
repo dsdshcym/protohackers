@@ -194,8 +194,8 @@ defmodule Protohackers.JobCentre.Repository.Blocking do
         {:noreply, wrapped_repo}
 
       {:ok, updated_repo, job} ->
-        GenServer.reply(from, {:ok, job})
-        {:noreply, updated_repo}
+        GenServer.reply(from, {:ok, updated_repo, job})
+        {:stop, :normal, updated_repo}
     end
   end
 
@@ -206,8 +206,8 @@ defmodule Protohackers.JobCentre.Repository.Blocking do
         {:noreply, wrapped_repo}
 
       {:ok, updated_repo, job} ->
-        GenServer.reply(from, {:ok, job})
-        {:noreply, updated_repo}
+        GenServer.reply(from, {:ok, updated_repo, job})
+        {:stop, :normal, updated_repo}
     end
   end
 
@@ -218,8 +218,8 @@ defmodule Protohackers.JobCentre.Repository.Blocking do
         {:noreply, wrapped_repo}
 
       {:ok, updated_repo, job} ->
-        GenServer.reply(from, {:ok, job})
-        {:noreply, updated_repo}
+        GenServer.reply(from, {:ok, updated_repo, job})
+        {:stop, :normal, updated_repo}
     end
   end
 
@@ -228,22 +228,23 @@ defmodule Protohackers.JobCentre.Repository.Blocking do
   end
 
   defimpl Protohackers.JobCentre.Repository do
-    def get_and_update(%{pid: pid} = blocking, query, update_fn) do
-      {:ok, job} = GenServer.call(pid, {:get_and_update, query, update_fn}, :infinity)
+    def get_and_update(%{pid: pid}, query, update_fn) do
+      {:ok, updated_repo, job} =
+        GenServer.call(pid, {:get_and_update, query, update_fn}, :infinity)
 
-      {:ok, blocking, job}
+      {:ok, updated_repo, job}
     end
 
-    def insert(%{pid: pid} = blocking, record) do
-      {:ok, job} = GenServer.call(pid, {:insert, record}, :infinity)
+    def insert(%{pid: pid}, record) do
+      {:ok, updated_repo, job} = GenServer.call(pid, {:insert, record}, :infinity)
 
-      {:ok, blocking, job}
+      {:ok, updated_repo, job}
     end
 
-    def update(%{pid: pid} = blocking, record) do
-      {:ok, job} = GenServer.call(pid, {:insert, record}, :infinity)
+    def update(%{pid: pid}, record) do
+      {:ok, updated_repo, job} = GenServer.call(pid, {:insert, record}, :infinity)
 
-      {:ok, blocking, job}
+      {:ok, updated_repo, job}
     end
   end
 end
