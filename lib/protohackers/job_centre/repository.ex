@@ -97,3 +97,70 @@ defmodule Protohackers.JobCentre.Repository.Map do
     end
   end
 end
+
+defmodule Protohackers.JobCentre.Repository.Agent do
+  @enforce_keys [:agent]
+  defstruct @enforce_keys
+
+  def new(repo) do
+    with {:ok, agent} <- Agent.start_link(fn -> repo end) do
+      {:ok, %__MODULE__{agent: agent}}
+    end
+  end
+
+  defimpl Protohackers.JobCentre.Repository do
+    def get_and_update(repo, query, update_fn) do
+      case Agent.get_and_update(repo.agent, fn wrapped_repo ->
+             case Protohackers.JobCentre.Repository.get_and_update(wrapped_repo, query, update_fn) do
+               {:ok, updated_repo, job} ->
+                 {{:ok, job}, updated_repo}
+
+               {:error, reason} ->
+                 {{:error, reason}, wrapped_repo}
+             end
+           end) do
+        {:ok, job} ->
+          {:ok, repo, job}
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end
+
+    def insert(repo, record) do
+      case Agent.get_and_update(repo.agent, fn wrapped_repo ->
+             case Protohackers.JobCentre.Repository.insert(wrapped_repo, record) do
+               {:ok, updated_repo, inserted_job} ->
+                 {{:ok, inserted_job}, updated_repo}
+
+               {:error, reason} ->
+                 {{:error, reason}, wrapped_repo}
+             end
+           end) do
+        {:ok, inserted_job} ->
+          {:ok, repo, inserted_job}
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end
+
+    def update(repo, record) do
+      case Agent.get_and_update(repo.agent, fn wrapped_repo ->
+             case Protohackers.JobCentre.Repository.update(wrapped_repo, record) do
+               {:ok, updated_repo, updated_job} ->
+                 {{:ok, updated_job}, updated_repo}
+
+               {:error, reason} ->
+                 {{:error, reason}, wrapped_repo}
+             end
+           end) do
+        {:ok, updated_job} ->
+          {:ok, repo, updated_job}
+
+        {:error, reason} ->
+          {:error, reason}
+      end
+    end
+  end
+end
